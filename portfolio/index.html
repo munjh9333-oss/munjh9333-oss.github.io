@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI와 함께 만든 작업</title>
+<meta name="description" content="Claude Code, Codex와 함께 설계부터 검증까지 풀어 본 세 가지 작업">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&family=Gothic+A1:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --paper:#F5F7F3;
+    --grid:#E2E8DF;
+    --ink:#18212C;
+    --ink-2:#4F5B67;
+    --rule:#18212C;
+    --hair:#C5CEC4;
+    --accent:#2647A8;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#11161B;
+      --grid:#1A2228;
+      --ink:#E4E9ED;
+      --ink-2:#9DA8B3;
+      --rule:#C9D2DA;
+      --hair:#34404A;
+      --accent:#93ABFF;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#11161B;
+    --grid:#1A2228;
+    --ink:#E4E9ED;
+    --ink-2:#9DA8B3;
+    --rule:#C9D2DA;
+    --hair:#34404A;
+    --accent:#93ABFF;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background-color:var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:20px 20px;
+    color:var(--ink);
+    font:400 16px/1.75 "Gothic A1", "Malgun Gothic", system-ui, sans-serif;
+    word-break:keep-all;
+    overflow-wrap:break-word;
+  }
+  .page{max-width:760px;margin:0 auto;padding:72px 16px 96px}
+  a{color:var(--accent);text-underline-offset:3px;text-decoration-thickness:1px}
+  a:hover{text-decoration-thickness:2px}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+
+  h1,h2{font-family:"Hahmlet", "Batang", serif;letter-spacing:-.02em;margin:0}
+  h1{font-weight:800;font-size:clamp(36px, 8vw, 62px);line-height:1.14;max-width:12em}
+  .lede{font-size:18px;color:var(--ink);margin:28px 0 0;max-width:34em}
+
+  /* 근거 표시: 모양으로 구분 (색만으로 구분하지 않음) */
+  .g{display:inline-block;width:11px;height:11px;border-radius:50%;border:1.5px solid var(--accent);flex:none}
+  .g.ok{background:var(--accent)}
+  .g.est{border-style:dashed}
+
+  .key{margin:28px 0 0;padding:18px 20px;border:1.5px solid var(--rule);background:var(--paper);max-width:34em}
+  .key p{margin:0 0 10px;font-weight:500}
+  .key dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:15px}
+  .key dt{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap}
+  .key dd{margin:0;color:var(--ink-2)}
+
+  section{margin-top:96px}
+  h2{font-weight:800;font-size:clamp(28px, 5vw, 36px);line-height:1.25}
+  .problem{font-size:17px;color:var(--ink-2);margin:12px 0 0;max-width:34em}
+
+  /* 표제란: 도면의 바깥 굵은 선, 안쪽 가는 선 */
+  .titleblock{
+    display:grid;grid-template-columns:repeat(4, 1fr);
+    margin:28px 0 0;border:1.5px solid var(--rule);background:var(--paper);
+  }
+  .titleblock div{padding:10px 14px;border-left:1px solid var(--hair)}
+  .titleblock div:first-child{border-left:0}
+  .titleblock dt{font-size:13px;color:var(--ink-2)}
+  .titleblock dd{margin:2px 0 0;font-size:15px;font-weight:500;line-height:1.5}
+  @media (max-width:640px){
+    .titleblock{grid-template-columns:1fr 1fr}
+    .titleblock div:nth-child(3){border-left:0}
+    .titleblock div:nth-child(n+3){border-top:1px solid var(--hair)}
+  }
+
+  h3{font-size:16px;font-weight:700;margin:32px 0 8px}
+  section p{margin:0;max-width:40em}
+  section ul{margin:0;padding-left:20px;max-width:40em}
+  section li{margin-bottom:8px}
+  section li::marker{color:var(--ink-2)}
+
+  .evidence{list-style:none;padding:0 !important;margin:32px 0 0 !important;max-width:none !important;
+    display:grid;grid-template-columns:repeat(3, 1fr);gap:20px}
+  .evidence li{margin:0;padding-top:12px;border-top:1.5px solid var(--rule)}
+  .evidence .n{display:block;font:600 26px/1.2 "Hahmlet", "Batang", serif;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .evidence .what{display:block;font-size:15px;margin-top:4px;line-height:1.5}
+  .evidence .src{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2);margin-top:6px;line-height:1.4}
+  @media (max-width:640px){.evidence{grid-template-columns:1fr;gap:16px}}
+
+  .more{margin-top:28px !important;font-weight:700}
+
+  footer{margin-top:112px;padding-top:16px;border-top:1px solid var(--hair);font-size:14px;color:var(--ink-2)}
+  footer p{margin:0 0 4px}
+</style>
+</head>
+<body>
+<main class="page">
+
+  <h1>AI와 함께 끝까지 풀어 본 문제 세 가지</h1>
+  <p class="lede">Claude Code와 Codex를 동료로 두고, 제가 실제로 부딪힌 문제를 설계부터 검증까지 풀었습니다. AI가 낸 답은 바로 쓰지 않고 테스트, 실측, 원문으로 확인한 뒤에 받아들였습니다.</p>
+
+  <div class="key">
+    <p>그래서 아래 숫자에는 근거를 함께 표시했습니다.</p>
+    <dl>
+      <dt><i class="g ok" aria-hidden="true"></i>확인</dt><dd>직접 실행하거나 측정한 값, 또는 데이터시트 같은 원문에서 확인한 값</dd>
+      <dt><i class="g" aria-hidden="true"></i>계산</dt><dd>가정을 두고 계산하거나 시뮬레이션한 값. 실측이 아닙니다.</dd>
+      <dt><i class="g est" aria-hidden="true"></i>추정</dt><dd>시장 조사 등으로 어림한 값</dd>
+    </dl>
+  </div>
+
+  <section id="pals" aria-labelledby="pals-title">
+    <h2 id="pals-title">PALS 일정 비서</h2>
+    <p class="problem">계획을 세워도 정신없는 날에는 놓칩니다. 놓친 일은 아무도 모르게 사라집니다.</p>
+
+    <dl class="titleblock">
+      <div><dt>시작</dt><dd>2026년 9월 26일</dd></div>
+      <div><dt>상태</dt><dd>1·2단계 구현, 9월 30일부터 실사용</dd></div>
+      <div><dt>함께한 AI</dt><dd>Claude Code, Codex, 로컬 AI</dd></div>
+      <div><dt>결과물</dt><dd><a href="https://github.com/munjh9333-oss/PALS">GitHub 저장소</a></dd></div>
+    </dl>
+
+    <h3>무엇을 만들었나</h3>
+    <p>아침마다 텔레그램으로 오늘 계획을 보내고, 확정하면 구글 캘린더의 PALS 전용 캘린더에 공부 시간을 배치합니다. 저녁에는 못 한 일을 확인해 새 시간으로 옮기거나 분량을 줄이자고 제안합니다. 일정은 구글 캘린더, 할 일은 노션, 저에 대한 기억(목표, 습관, 일지)은 옵시디언에 둡니다. 모든 변경은 제안한 뒤 승인을 받고, 답이 없으면 아무것도 바꾸지 않습니다.</p>
+
+    <h3>AI와 어떻게 했나</h3>
+    <ul>
+      <li>Claude Code와 함께 21가지 결정과 그 이유를 설계서에 남기고, 단계별 계획을 세운 뒤 테스트를 먼저 쓰며 구현했습니다.</li>
+      <li>첫 조사 보고서가 웹 검색 없이 모델 지식만으로 쓰인 것을 알아채고, Codex를 업데이트해 실제 웹 검색으로 다시 조사하게 했습니다. 출처가 달린 그 조사로 아침 브리핑 형식을 정했습니다.</li>
+      <li>앱 안의 로컬 AI는 "오후에 약속 생겼어" 같은 말을 해석합니다. 10문항 평가셋으로 모델을 골랐고, 생각 모드를 끄지 않으면 정답이 2/10으로 떨어지고 한 번에 38초가 걸린다는 것도 측정으로 찾았습니다.</li>
+      <li>시간 계산은 코드가, 말은 AI가 맡도록 나눴습니다. 로컬 AI가 멈춰도 기본 브리핑은 코드로 나갑니다.</li>
+    </ul>
+
+    <ul class="evidence">
+      <li><span class="n">110개</span><span class="what">테스트 통과</span><span class="src"><i class="g ok" aria-hidden="true"></i>확인, 10월 1일 직접 실행</span></li>
+      <li><span class="n">9 / 10</span><span class="what">로컬 AI의 일정 조정 문장 해석, 평균 0.7초</span><span class="src"><i class="g ok" aria-hidden="true"></i>확인, RTX 5070에서 측정</span></li>
+      <li><span class="n">40개</span><span class="what">닷새 동안 쌓은 커밋</span><span class="src"><i class="g ok" aria-hidden="true"></i>확인, git 기록</span></li>
+    </ul>
+
+    <p class="more"><a href="https://github.com/munjh9333-oss/PALS">설계서와 코드 보기</a></p>
+  </section>
+
+  <section id="lighting" aria-labelledby="lighting-title">
+    <h2 id="lighting-title">소극장 조명 제어부 개편</h2>
+    <p class="problem">페이더를 끝까지 내려도 조명이 완전히 꺼지지 않았습니다. 암전이 안 되면 연극은 장면을 나눌 수 없습니다.</p>
+
+    <dl class="titleblock">
+      <div><dt>시기</dt><dd>2026년 8~9월</dd></div>
+      <div><dt>상태</dt><dd>기획서 완성</dd></div>
+      <div><dt>함께한 AI</dt><dd>Claude</dd></div>
+      <div><dt>결과물</dt><dd><a href="lighting.html">기획서 전문</a></dd></div>
+    </dl>
+
+    <h3>무엇을 만들었나</h3>
+    <p>결함이 생긴 노후 콘솔(FOX-512)을 고치는 대신 제어부만 PC로 바꾸는 기획서입니다. 무료인 ChamSys MagicQ PC와 국제 표준(sACN) 출력 노드 하나로 조명 21대를 한 유니버스에 담고, 예산과 4개월 일정, 실측 체크리스트까지 정리했습니다.</p>
+
+    <h3>AI와 어떻게 했나</h3>
+    <ul>
+      <li>출력 장치 네 가지를 비용, 이동 편의, 나중에 다시 쓸 수 있는지로 비교했습니다. 가장 싼 USB 장치는 제조사 매뉴얼에 "연속 5시간이 지나면 모든 채널을 0으로 출력"한다는 제한이 있어, 공연 중 전체 소등 위험으로 뺐습니다.</li>
+      <li>확인하지 못한 채널 수와 금액은 추정이라고 표시하고, 돈이 들지 않는 검증과 실측을 구매보다 앞에 두었습니다.</li>
+      <li>같은 무대를 두고 uDMX 지연 분석, QLC+ 운용 지도, 이더넷-DMX 노드 제작 계획, 조명 앞에 다는 그림자 판(쿠키) 도면 생성기도 함께 만들었습니다.</li>
+    </ul>
+
+    <ul class="evidence">
+      <li><span class="n">205,000원</span><span class="what">총예산</span><span class="src"><i class="g est" aria-hidden="true"></i>추정, 시장 조사 기준</span></li>
+      <li><span class="n">약 4%</span><span class="what">하드웨어 콘솔(500만 원부터) 대비 비용</span><span class="src"><i class="g" aria-hidden="true"></i>계산</span></li>
+      <li><span class="n">100~200</span><span class="what">512채널 중 쓰게 될 채널</span><span class="src"><i class="g est" aria-hidden="true"></i>추정, 실측 전</span></li>
+    </ul>
+
+    <p class="more"><a href="lighting.html">기획서 전문 보기</a></p>
+  </section>
+
+  <section id="swarm" aria-labelledby="swarm-title">
+    <h2 id="swarm-title">곤충 크기 군집 드론</h2>
+    <p class="problem">곤충만 한 비행 로봇 수천 대가 협력해 일할 수 있을까요. 날개폭 3~5cm, 무게 2g, 자율비행, 센싱을 한꺼번에 해낸 사례는 아직 없습니다.</p>
+
+    <dl class="titleblock">
+      <div><dt>시작</dt><dd>2026년 9월</dd></div>
+      <div><dt>상태</dt><dd>기체 모델 완성, 시뮬레이션 진행 중</dd></div>
+      <div><dt>함께한 AI</dt><dd>Claude Code 두 세션, Codex</dd></div>
+      <div><dt>결과물</dt><dd><a href="swarm-drone.html">프로젝트 정리 문서</a></dd></div>
+    </dl>
+
+    <h3>무엇을 만들었나</h3>
+    <p>막막한 목표를 곤충 크기 달성과 군집 운용이라는 두 문제로 나눴습니다. 배터리, 기체, 시뮬레이션 세 갈래가 서로 기다리지 않게 계획하고, 수십 g급 기체를 방정식으로 먼저 설계했습니다. 지금은 실내 공간을 그려 내는 지도 병합 시뮬레이션과 여러 기체를 협조시키는 제어 시뮬레이션을 만들고 있습니다.</p>
+
+    <h3>AI와 어떻게 했나</h3>
+    <ul>
+      <li>Claude Code 두 세션(기체, 시뮬레이션)과 Codex가 한 저장소를 함께 고칩니다. 인수인계 문서와 작업 기록 규칙을 세워 세션이 바뀌어도 맥락이 끊기지 않게 했습니다.</li>
+      <li>모든 수치를 확인된 사실, 계산 예시, 설계 제안으로 나눠 적게 했습니다. 이 페이지의 근거 표시도 여기서 가져왔습니다.</li>
+      <li>정답 데이터를 보고 문턱값을 고르는 실수를 두 번 잡아낸 뒤, "정답을 보고 방법을 고르지 않는다"를 실험 규칙으로 만들었습니다.</li>
+      <li>기체를 100대에서 1,000대로 늘려도 커버리지가 0.19에서 0.22로만 오른다는 것을 시뮬레이션으로 확인했습니다. 커버리지는 대수가 아니라 비행 궤적이 정합니다. 궤적을 섞자 같은 비행량에서 0.237이 0.397이 됐습니다.</li>
+    </ul>
+
+    <ul class="evidence">
+      <li><span class="n">76개</span><span class="what">시뮬레이션 시험 통과</span><span class="src"><i class="g ok" aria-hidden="true"></i>확인, 10월 1일 직접 실행</span></li>
+      <li><span class="n">27.8 g</span><span class="what">기체 총무게, 비행 4.6분</span><span class="src"><i class="g" aria-hidden="true"></i>계산, 실물 제작 전</span></li>
+      <li><span class="n">0.19 → 0.22</span><span class="what">기체를 10배로 늘렸을 때 커버리지</span><span class="src"><i class="g" aria-hidden="true"></i>계산, 시뮬레이션</span></li>
+    </ul>
+
+    <p class="more"><a href="swarm-drone.html">프로젝트 정리 문서 보기</a></p>
+  </section>
+
+  <footer>
+    <p>이 페이지도 Claude Code와 함께 만들었습니다. 2026년 10월 1일 갱신.</p>
+    <p>GitHub <a href="https://github.com/munjh9333-oss">munjh9333-oss</a></p>
+  </footer>
+
+</main>
+</body>
+</html>

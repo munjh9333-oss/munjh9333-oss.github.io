@@ -1,0 +1,689 @@
+<!doctype html><html lang="ko"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>조명 제어부 개편 기획서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ground:#F5F6F8;
+    --surface:#FFFFFF;
+    --surface-2:#FAFBFC;
+    --ink:#15181E;
+    --ink-2:#565C69;
+    --ink-3:#878D9B;
+    --rule:#DFE2E9;
+    --rule-strong:#C3C9D4;
+    --accent:#1E3A5F;
+    --accent-soft:#E8EDF4;
+    --warn:#9A4B10;
+    --warn-soft:#FBF0E4;
+    --ok:#14663D;
+    --ok-soft:#E4F0EA;
+    --shadow:0 1px 2px rgba(21,24,30,.05), 0 8px 24px -16px rgba(21,24,30,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#14161A;
+      --surface:#1B1E24;
+      --surface-2:#20242B;
+      --ink:#E8EAEF;
+      --ink-2:#A2A8B5;
+      --ink-3:#767D8B;
+      --rule:#2C313A;
+      --rule-strong:#3C424D;
+      --accent:#7FA9DC;
+      --accent-soft:#1E2833;
+      --warn:#E0A263;
+      --warn-soft:#2B2118;
+      --ok:#6DBF95;
+      --ok-soft:#16261E;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#14161A;
+    --surface:#1B1E24;
+    --surface-2:#20242B;
+    --ink:#E8EAEF;
+    --ink-2:#A2A8B5;
+    --ink-3:#767D8B;
+    --rule:#2C313A;
+    --rule-strong:#3C424D;
+    --accent:#7FA9DC;
+    --accent-soft:#1E2833;
+    --warn:#E0A263;
+    --warn-soft:#2B2118;
+    --ok:#6DBF95;
+    --ok-soft:#16261E;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);
+    color:var(--ink);
+    font-family:"IBM Plex Sans KR","Malgun Gothic",system-ui,sans-serif;
+    font-size:15px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{
+    max-width:920px;
+    margin:0 auto;
+    padding:56px 28px 96px;
+  }
+
+  /* ---- 문서 표제부 ---- */
+  .docmark{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    margin-bottom:14px;
+  }
+  h1{
+    font-family:"Gowun Batang","Batang",serif;
+    font-weight:700;
+    font-size:clamp(30px,5vw,44px);
+    line-height:1.28;
+    letter-spacing:-.01em;
+    margin:0 0 10px;
+    text-wrap:balance;
+  }
+  .subtitle{
+    font-size:16px;
+    color:var(--ink-2);
+    margin:0 0 30px;
+    max-width:62ch;
+  }
+  .metagrid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+    gap:0;
+    border:1px solid var(--rule);
+    border-radius:3px;
+    overflow:hidden;
+    background:var(--surface);
+    margin-bottom:14px;
+  }
+  .metagrid > div{
+    padding:12px 16px;
+    border-right:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);
+  }
+  .metagrid dt{
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    font-family:"IBM Plex Mono",monospace;
+    margin:0 0 3px;
+  }
+  .metagrid dd{
+    margin:0;
+    font-size:14px;
+    font-weight:500;
+  }
+  .fillin{
+    color:var(--ink-3);
+    font-weight:400;
+    font-style:normal;
+    background:var(--accent-soft);
+    padding:1px 7px;
+    border-radius:2px;
+    font-size:13px;
+  }
+  .notice{
+    display:flex;
+    gap:11px;
+    align-items:flex-start;
+    font-size:13px;
+    color:var(--ink-2);
+    background:var(--surface-2);
+    border:1px dashed var(--rule-strong);
+    border-radius:3px;
+    padding:12px 15px;
+    margin-bottom:44px;
+  }
+  .notice b{color:var(--ink);font-weight:600}
+
+  /* ---- 섹션 ---- */
+  section{margin-bottom:52px}
+  h2{
+    font-family:"Gowun Batang","Batang",serif;
+    font-size:23px;
+    font-weight:700;
+    letter-spacing:-.01em;
+    margin:0 0 6px;
+    padding-bottom:11px;
+    border-bottom:2px solid var(--accent);
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+  h2 .num{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:14px;
+    font-weight:500;
+    color:var(--accent);
+    flex:none;
+  }
+  h3{
+    font-size:15px;
+    font-weight:600;
+    margin:28px 0 8px;
+    color:var(--ink);
+  }
+  h3::before{
+    content:attr(data-mark);
+    font-family:"IBM Plex Mono",monospace;
+    color:var(--ink-3);
+    font-weight:500;
+    margin-right:9px;
+  }
+  p{margin:0 0 12px;max-width:66ch}
+  ul{margin:0 0 12px;padding-left:19px;max-width:66ch}
+  li{margin-bottom:5px}
+  li::marker{color:var(--ink-3)}
+  strong{font-weight:600}
+  .mono{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+
+  /* ---- 결함 카드 (핵심 근거) ---- */
+  .defects{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(255px,1fr));
+    gap:14px;
+    margin:20px 0 8px;
+  }
+  .defect{
+    background:var(--surface);
+    border:1px solid var(--rule);
+    border-left:3px solid var(--warn);
+    border-radius:3px;
+    padding:16px 18px;
+  }
+  .defect .tag{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:10px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--warn);
+    background:var(--warn-soft);
+    padding:2px 7px;
+    border-radius:2px;
+    display:inline-block;
+    margin-bottom:9px;
+  }
+  .defect h4{margin:0 0 6px;font-size:14.5px;font-weight:600}
+  .defect p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.65}
+  .defect .impact{
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid var(--rule);
+    font-size:13px;
+    color:var(--warn);
+    font-weight:500;
+  }
+
+  /* ---- 표 ---- */
+  .tablewrap{
+    overflow-x:auto;
+    border:1px solid var(--rule);
+    border-radius:3px;
+    background:var(--surface);
+    margin:16px 0;
+  }
+  table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:520px}
+  caption{
+    text-align:left;
+    font-size:12px;
+    color:var(--ink-3);
+    padding:11px 15px 0;
+    font-family:"IBM Plex Mono",monospace;
+    letter-spacing:.04em;
+  }
+  th,td{
+    padding:9px 15px;
+    text-align:left;
+    border-bottom:1px solid var(--rule);
+    vertical-align:top;
+  }
+  thead th{
+    font-size:11.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    font-weight:600;
+    background:var(--surface-2);
+    white-space:nowrap;
+  }
+  tbody tr:last-child td{border-bottom:none}
+  tfoot td{
+    border-top:2px solid var(--rule-strong);
+    border-bottom:none;
+    font-weight:600;
+    background:var(--surface-2);
+  }
+  .num-cell{text-align:right;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .pick{color:var(--ok);font-weight:600;white-space:nowrap}
+  .rejectcell{color:var(--warn);font-weight:600;white-space:nowrap}
+
+  /* ---- DMX 채널 점유 그래프 ---- */
+  .chanviz{
+    background:var(--surface);
+    border:1px solid var(--rule);
+    border-radius:3px;
+    padding:20px 22px 16px;
+    margin:20px 0;
+  }
+  .chanviz-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .chanviz-head .label{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+  }
+  .chanviz-head .val{font-size:13px;color:var(--ink-2)}
+  .chanviz-head .val b{color:var(--accent);font-weight:600}
+  .chbar{
+    position:relative;
+    height:34px;
+    background:var(--accent-soft);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .chbar-lo{position:absolute;left:0;top:0;bottom:0;width:19.5%;background:var(--accent);opacity:.9}
+  .chbar-hi{position:absolute;left:19.5%;top:0;bottom:0;width:19.6%;background:var(--accent);opacity:.42}
+  .chticks{
+    display:flex;
+    justify-content:space-between;
+    margin-top:7px;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11px;
+    color:var(--ink-3);
+    font-variant-numeric:tabular-nums;
+  }
+  .chlegend{
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+    margin-top:13px;
+    font-size:12px;
+    color:var(--ink-2);
+  }
+  .chlegend span{display:flex;align-items:center;gap:7px}
+  .sw{width:11px;height:11px;border-radius:2px;flex:none;background:var(--accent)}
+  .sw.mid{opacity:.42}
+  .sw.free{background:var(--accent-soft);border:1px solid var(--rule-strong)}
+
+  /* ---- 일정 ---- */
+  .sched{
+    display:grid;
+    gap:0;
+    border:1px solid var(--rule);
+    border-radius:3px;
+    overflow:hidden;
+    background:var(--surface);
+    margin:16px 0;
+  }
+  .sched-row{
+    display:grid;
+    grid-template-columns:88px 1fr 108px;
+    gap:16px;
+    padding:14px 18px;
+    border-bottom:1px solid var(--rule);
+    align-items:baseline;
+  }
+  .sched-row:last-child{border-bottom:none}
+  .sched-when{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12px;
+    color:var(--accent);
+    font-weight:500;
+    letter-spacing:.02em;
+  }
+  .sched-what strong{display:block;font-size:14px;margin-bottom:2px}
+  .sched-what span{font-size:13px;color:var(--ink-2);line-height:1.6}
+  .sched-cost{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12.5px;
+    text-align:right;
+    color:var(--ink-2);
+    font-variant-numeric:tabular-nums;
+  }
+  .sched-cost.free{color:var(--ok)}
+  @media (max-width:620px){
+    .sched-row{grid-template-columns:1fr;gap:5px}
+    .sched-cost{text-align:left}
+  }
+
+  /* ---- 체크리스트 부록 ---- */
+  .checkbox{
+    display:inline-block;
+    width:12px;height:12px;
+    border:1.5px solid var(--rule-strong);
+    border-radius:2px;
+    margin-right:9px;
+    vertical-align:-1px;
+    flex:none;
+  }
+  .checklist{list-style:none;padding-left:0;max-width:66ch}
+  .checklist li{display:flex;align-items:flex-start;margin-bottom:7px;font-size:14px}
+  .blank{
+    display:inline-block;
+    min-width:56px;
+    border-bottom:1px solid var(--rule-strong);
+    margin:0 3px;
+  }
+
+  footer{
+    margin-top:64px;
+    padding-top:22px;
+    border-top:1px solid var(--rule);
+    font-size:12.5px;
+    color:var(--ink-3);
+    line-height:1.7;
+  }
+
+  @media print{
+    body{background:#fff;font-size:10.5pt}
+    .page{padding:0;max-width:none}
+    section{page-break-inside:avoid;margin-bottom:26px}
+    .notice{display:none}
+    h2{page-break-after:avoid}
+  }
+</style>
+
+<div class="page">
+
+  <p style="margin:0 0 28px;font-size:15px;font-weight:500"><a href="./" style="color:var(--accent)">작업 목록으로</a></p>
+  <p class="docmark">기획서 · 조명 제어부 개편</p>
+  <h1>소극장 조명 제어부 개편 기획서</h1>
+  <p class="subtitle">노후 조명 콘솔(FOX-512)의 구조적 결함을 해소하고, PC 기반 제어 시스템으로 전환하여 공연 안정성과 연출 표현 범위를 확보하고자 함.</p>
+
+  <dl class="metagrid">
+    <div><dt>소요 예산</dt><dd class="mono">약 205,000원</dd></div>
+    <div><dt>추진 기간</dt><dd>4개월</dd></div>
+    <div><dt>구분</dt><dd>제어부 교체 (기구 교체 없음)</dd></div>
+  </dl>
+
+  <p class="notice"><span>Claude와 함께 작성한 기획서의 공개본입니다. 작성자와 극장 정보는 뺐습니다. 금액은 시장 조사 기준 추정치이며, <b>제6항 일정의 2·3개월차 실측 조사</b>를 마친 뒤 확정 견적으로 대체하는 것을 전제로 작성되었습니다.</span></p>
+
+  <section>
+    <h2><span class="num">1</span>추진 배경 및 필요성</h2>
+    <p>현재 운용 중인 조명 콘솔 <strong>FOX-512</strong>는 노후로 인해 연극 공연 운용에 지장을 주는 결함이 발생하고 있습니다. 조명 기구 자체의 제어는 이루어지나, <strong>공연 진행의 기본 기능에서 결함</strong>이 확인되었습니다.</p>
+
+    <div class="defects">
+      <div class="defect">
+        <span class="tag">결함 1 · 치명</span>
+        <h4>페이더 0점 잔류 출력</h4>
+        <p>페이더를 최하단까지 내려도 DMX 출력값이 0으로 수렴하지 않고 미세하게 변동함. 페이더 포텐셔미터의 마모 및 접점 산화에 따른 증상으로 판단됨.</p>
+        <p class="impact">→ 완전 암전이 성립하지 않음. 연극의 장면 전환·암전 처리 불가.</p>
+      </div>
+      <div class="defect">
+        <span class="tag">결함 2 · 기능</span>
+        <h4>페이드 타임 및 커브 미지원</h4>
+        <p>큐별 페이드 인·아웃 시간을 개별 지정할 수 없고, 페이드 커브 조정 기능이 없음. 조광 변화가 일정 속도로만 이루어짐.</p>
+        <p class="impact">→ 연극 조명 연출의 기본 표현 수단이 제한됨.</p>
+      </div>
+      <div class="defect">
+        <span class="tag">결함 3 · 지속성</span>
+        <h4>단종에 따른 유지보수 불가</h4>
+        <p>단종 제품으로 수리 부품 조달 및 제조사 기술 지원을 받을 수 없음. 페이더 모듈 교체 수리가 사실상 불가능함.</p>
+        <p class="impact">→ 수리가 아닌 교체가 유일한 해결책임.</p>
+      </div>
+    </div>
+
+    <p style="margin-top:18px">특히 <strong>결함 1은 공연 품질에 직결되는 사안</strong>입니다. 암전은 연극에서 장면을 구분하는 가장 기본적인 수단이며, 이것이 성립하지 않는 상태로는 정상적인 공연 진행이 어렵습니다.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span>현황 분석</h2>
+
+    <h3 data-mark="가.">보유 조명 기구</h3>
+    <p>보유 기구는 <strong>전량 LED 및 무빙 기구</strong>로, 별도의 디머랙을 경유하지 않고 DMX 신호를 직접 수신하는 구조입니다. 따라서 이번 개편에서 <strong>디머랙 관련 예산은 발생하지 않습니다.</strong></p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>표 1. 보유 조명 기구 현황 및 DMX 채널 산정 (채널 수는 추정치, 실측 확정 필요)</caption>
+        <thead>
+          <tr><th>기구</th><th class="num-cell">수량</th><th class="num-cell">대당 채널(추정)</th><th class="num-cell">소계</th><th>비고</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>LED 보더</td><td class="num-cell">4</td><td class="num-cell">4 ~ 8</td><td class="num-cell">16 ~ 32</td><td>색상 모드에 따라 변동</td></tr>
+          <tr><td>LED 파</td><td class="num-cell">5</td><td class="num-cell">4 ~ 8</td><td class="num-cell">20 ~ 40</td><td>—</td></tr>
+          <tr><td>LED 파 (소프트)</td><td class="num-cell">10</td><td class="num-cell">4 ~ 8</td><td class="num-cell">40 ~ 80</td><td>—</td></tr>
+          <tr><td>무빙 라이트</td><td class="num-cell">2</td><td class="num-cell">12 ~ 24</td><td class="num-cell">24 ~ 48</td><td>팬·틸트·고보·컬러 등</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>합계</td><td class="num-cell">21</td><td class="num-cell">—</td><td class="num-cell">100 ~ 200</td><td>1 유니버스 내 수용</td></tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="chanviz">
+      <div class="chanviz-head">
+        <span class="label">DMX 유니버스 1 점유율</span>
+        <span class="val">추정 <b>100 ~ 200채널</b> / 512채널 · 여유 <b>60% 이상</b></span>
+      </div>
+      <div class="chbar" role="img" aria-label="DMX 512채널 중 최소 100채널에서 최대 200채널을 사용하며, 최소 312채널이 여유로 남음">
+        <div class="chbar-lo"></div>
+        <div class="chbar-hi"></div>
+      </div>
+      <div class="chticks"><span>1</span><span>128</span><span>256</span><span>384</span><span>512</span></div>
+      <div class="chlegend">
+        <span><i class="sw"></i>확정 사용 (약 100ch)</span>
+        <span><i class="sw mid"></i>변동 구간 (최대 200ch)</span>
+        <span><i class="sw free"></i>여유 (312ch 이상)</span>
+      </div>
+    </div>
+
+    <p><strong>1개 유니버스(512채널)로 전량 수용이 가능</strong>하며, 향후 기구를 추가하더라도 상당한 여유가 있습니다. 따라서 <strong>출력 장비는 1포트 사양으로 충분</strong>하며, 다포트 장비를 도입할 필요가 없습니다.</p>
+
+    <h3 data-mark="나.">기존 배선</h3>
+    <ul>
+      <li>DMX 커넥터 규격: <strong>3핀</strong> (신규 장비는 5핀이 표준이므로 변환 어댑터 필요)</li>
+      <li>케이블 규격 및 종단저항 설치 여부: <strong>실측 조사 대상</strong> (부록 참조)</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">3</span>개선 방안</h2>
+    <p>조명 기구는 정상 작동하므로 <strong>제어부만 교체</strong>합니다. 노후 콘솔을 <strong>PC 기반 조명 제어 시스템</strong>으로 대체하여, 하드웨어 콘솔 구입 대비 비용을 최소화합니다.</p>
+
+    <h3 data-mark="가.">제어 소프트웨어 — ChamSys MagicQ PC (무상)</h3>
+    <ul>
+      <li><strong>라이선스 비용 없음.</strong> 조명 콘솔 제조사 ChamSys가 배포하는 정식 소프트웨어로, 자사 하드웨어 콘솔과 동일한 프로그램입니다.</li>
+      <li><strong>무빙 라이트 제어 지원.</strong> 보유 무빙 2대의 팬·틸트, 고보, 컬러 어트리뷰트 제어와 팔레트·이펙트 기능이 필요하며, 이는 단순 조광 소프트웨어로는 불가능합니다.</li>
+      <li><strong>트래킹 큐 스택 지원.</strong> 큐별 페이드 인·아웃 시간과 커브를 개별 지정할 수 있어 <strong>제1항 결함 2가 해소</strong>됩니다.</li>
+      <li><strong>재생 전용 모드 제공.</strong> 공연 진행 시 프로그래밍을 잠근 상태로 운용할 수 있어, 오퍼레이터의 조작 실수로 큐가 훼손되는 사고를 방지합니다.</li>
+    </ul>
+
+    <h3 data-mark="나.">출력 장치 — sACN / Art-Net 노드 1포트</h3>
+    <p>PC에는 DMX 출력 단자가 없으므로, 네트워크 신호를 DMX로 변환하는 장치가 필요합니다. 구매 시 다음을 <strong>필수 사양</strong>으로 지정합니다.</p>
+    <ul>
+      <li><strong>sACN (E1.31) 지원</strong> — 향후 전문 콘솔 도입 시 승계 사용을 위한 필수 조건</li>
+      <li><strong>고정 IP 설정 가능</strong> — 공연장 이동 시 재설정 부담 제거</li>
+      <li><strong>광절연(Opto-isolation) 적용</strong> — 조명 회로 서지로부터 PC 보호</li>
+      <li>DMX 출력(XLR) 단자 탑재, 1 유니버스 이상</li>
+    </ul>
+
+    <h3 data-mark="다.">운용 PC — 기존 보유 장비 활용</h3>
+    <p><strong>신규 구매하지 않습니다.</strong> 기존 노트북을 활용하되, 공연 안정성 확보를 위해 다음 설정을 적용합니다. (비용 발생 없음)</p>
+    <ul>
+      <li>자동 업데이트 차단, 절전·화면보호기 해제</li>
+      <li>공연 중 네트워크 격리</li>
+      <li>공연 종료 시마다 쇼 파일 외부 저장매체 백업</li>
+    </ul>
+
+    <h3 data-mark="라.">부자재</h3>
+    <p>DMX 5핀 ↔ 3핀 변환 어댑터, DMX 종단저항, 네트워크 케이블, 이동용 수납 파우치.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">4</span>대안 비교 및 선정 사유</h2>
+    <p>출력 장치는 여러 방식이 존재하므로, 이동 운용 조건과 장기 확장성을 함께 검토하였습니다.</p>
+
+    <div class="tablewrap">
+      <table>
+        <caption>표 2. 출력 장치 대안 비교</caption>
+        <thead>
+          <tr><th>방안</th><th class="num-cell">개략 비용</th><th>이동 편의</th><th>향후 승계</th><th>검토 결과</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>A. sACN 노드</strong><br><span style="color:var(--ink-2);font-size:12.5px">네트워크 방식</span></td>
+            <td class="num-cell">12 ~ 18만원</td>
+            <td>파우치 수납 시 양호<br><span style="color:var(--ink-2);font-size:12.5px">케이블·전원 동반</span></td>
+            <td>가능<br><span style="color:var(--ink-2);font-size:12.5px">전문 콘솔 전환 시 재사용</span></td>
+            <td class="pick">채택</td>
+          </tr>
+          <tr>
+            <td>B. MagicDMX Full<br><span style="color:var(--ink-2);font-size:12.5px">USB 직결 방식</span></td>
+            <td class="num-cell">13 ~ 15만원</td>
+            <td>우수<br><span style="color:var(--ink-2);font-size:12.5px">USB 단독</span></td>
+            <td>불가<br><span style="color:var(--ink-2);font-size:12.5px">MagicQ 전용 규격</span></td>
+            <td>차선</td>
+          </tr>
+          <tr>
+            <td>C. MagicDMX Basic<br><span style="color:var(--ink-2);font-size:12.5px">USB 직결 방식</span></td>
+            <td class="num-cell">6 ~ 8만원</td>
+            <td>우수</td>
+            <td>불가</td>
+            <td class="rejectcell">부적합</td>
+          </tr>
+          <tr>
+            <td>D. 전용 하드웨어 콘솔<br><span style="color:var(--ink-2);font-size:12.5px">ETC Element 2 등</span></td>
+            <td class="num-cell">500만원 ~</td>
+            <td>불가<br><span style="color:var(--ink-2);font-size:12.5px">고정 설치</span></td>
+            <td>해당 없음</td>
+            <td class="rejectcell">예산 초과</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 data-mark="가.">방안 C를 배제한 사유</h3>
+    <p>가장 저렴한 대안이나, 제조사 매뉴얼에 <strong>연속 사용 5시간 제한</strong>이 명시되어 있습니다. 제한 시간이 만료되면 <strong>모든 DMX 채널을 0으로 출력</strong>하며, 복구를 위해서는 장치를 물리적으로 분리한 뒤 소프트웨어를 재시작해야 합니다.</p>
+    <p>리허설과 본공연이 같은 날 진행되는 통상적인 공연 일정에서 <strong>공연 도중 전 조명이 소등될 위험</strong>이 있고, 공연 중에는 복구가 불가능합니다. 초기 비용 절감분보다 위험이 크므로 배제하였습니다.</p>
+
+    <h3 data-mark="나.">방안 A를 채택한 사유</h3>
+    <p>방안 B가 이동 편의에서 다소 유리하나, <strong>제조사 전용 규격이어서 향후 전문 콘솔로 전환할 경우 재사용이 불가능</strong>합니다. 방안 A의 노드는 국제 표준(sACN·Art-Net)을 사용하므로 소프트웨어나 콘솔을 교체하더라도 그대로 사용할 수 있습니다. 비용 차이가 크지 않은 점을 고려할 때, <strong>장기적으로 방안 A가 유리</strong>합니다.</p>
+    <p>이동 편의 문제는 <strong>노드·전원 어댑터·단거리 네트워크 케이블을 하나의 파우치로 상시 구성</strong>하고, 고정 IP를 사전 설정해 두는 것으로 해소합니다. 이 경우 현장에서는 케이블 연결만으로 운용이 시작됩니다.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">5</span>소요 예산</h2>
+
+    <div class="tablewrap">
+      <table>
+        <caption>표 3. 소요 예산 내역 (단위: 원 · 시장 조사 기준 추정, 확정 견적으로 대체 예정)</caption>
+        <thead>
+          <tr><th>구분</th><th>규격 / 사양</th><th class="num-cell">수량</th><th class="num-cell">추정 금액</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>제어 소프트웨어</td><td>ChamSys MagicQ PC</td><td class="num-cell">1</td><td class="num-cell" style="color:var(--ok);font-weight:600">0</td></tr>
+          <tr><td>DMX 출력 노드</td><td>sACN(E1.31) 지원, 1포트, 광절연</td><td class="num-cell">1</td><td class="num-cell">150,000</td></tr>
+          <tr><td>변환 어댑터</td><td>DMX XLR 5핀 ↔ 3핀 (양방향)</td><td class="num-cell">2</td><td class="num-cell">20,000</td></tr>
+          <tr><td>네트워크 케이블</td><td>CAT.5e 이상 (1m / 10m)</td><td class="num-cell">2</td><td class="num-cell">15,000</td></tr>
+          <tr><td>DMX 종단저항</td><td>120Ω XLR 터미네이터</td><td class="num-cell">2</td><td class="num-cell">10,000</td></tr>
+          <tr><td>이동용 파우치</td><td>장비 일괄 수납용</td><td class="num-cell">1</td><td class="num-cell">10,000</td></tr>
+          <tr><td>운용 PC</td><td>기존 보유 장비 활용</td><td class="num-cell">—</td><td class="num-cell" style="color:var(--ok);font-weight:600">0</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td colspan="3">합계</td><td class="num-cell">205,000</td></tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <p>총액의 <strong>73%가 출력 노드 1개 항목</strong>이며, 나머지는 소모성 부자재입니다. 소프트웨어와 운용 PC에서 비용이 발생하지 않는 구조로, <strong>동급 기능의 하드웨어 콘솔 도입 대비 약 4% 수준의 예산</strong>으로 동일한 제어 성능을 확보합니다.</p>
+    <p style="font-size:13px;color:var(--ink-2)">※ 해외 직구 시 물품가 미화 150달러 이하는 관·부가세가 면제되므로, 노드 항목은 국내 유통가 대비 절감 여지가 있습니다. 규정 변동 여부는 구매 시점에 확인이 필요합니다.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">6</span>추진 일정</h2>
+    <p>구매에 앞서 <strong>무상으로 가능한 검증과 실측을 선행</strong>하여, 확정 견적과 실측 데이터를 확보한 뒤 집행합니다.</p>
+
+    <div class="sched">
+      <div class="sched-row">
+        <span class="sched-when">1개월차</span>
+        <span class="sched-what"><strong>제어 소프트웨어 검증</strong><span>MagicQ 설치 및 운용 숙달. 보유 기구에 대한 패치 구성과 큐 작성을 사전 수행하여 도입 타당성을 확인.</span></span>
+        <span class="sched-cost free">비용 없음</span>
+      </div>
+      <div class="sched-row">
+        <span class="sched-when">2개월차</span>
+        <span class="sched-what"><strong>현 시스템 실측 조사</strong><span>기구별 DMX 주소·채널 수 확정, 작동 이상 유무 점검, 배선 규격 및 종단저항 확인. 부록 체크리스트에 따라 수행.</span></span>
+        <span class="sched-cost free">비용 없음</span>
+      </div>
+      <div class="sched-row">
+        <span class="sched-when">3개월차</span>
+        <span class="sched-what"><strong>견적 확보 및 기획서 확정</strong><span>실측 결과를 반영해 사양 확정, 복수 업체 견적 취합 후 본 기획서 최종본 상신.</span></span>
+        <span class="sched-cost free">비용 없음</span>
+      </div>
+      <div class="sched-row">
+        <span class="sched-when">4개월차</span>
+        <span class="sched-what"><strong>구매 · 설치 · 시범 운용</strong><span>장비 입고 후 설치, 연속 출력 시험을 포함한 안정성 검증, 실제 공연 투입 전 시범 운용.</span></span>
+        <span class="sched-cost">205,000원</span>
+      </div>
+    </div>
+
+    <p><strong>1 ~ 3개월차는 비용이 발생하지 않으며</strong>, 예산 집행은 4개월차 단일 시점에 이루어집니다.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">7</span>기대 효과</h2>
+    <ul>
+      <li><strong>암전 정상화.</strong> 제1항 결함 1이 해소되어 장면 전환이 정상적으로 성립합니다. 공연 품질에 직결되는 효과입니다.</li>
+      <li><strong>연출 표현 범위 확대.</strong> 큐별 페이드 타임·커브 개별 지정이 가능해져, 기존에 구현할 수 없던 조명 연출을 수행할 수 있습니다.</li>
+      <li><strong>운용 지속성 확보.</strong> 소프트웨어가 지속적으로 갱신되며 갱신 비용이 발생하지 않습니다. 단종 부품 조달 문제에서 벗어납니다.</li>
+      <li><strong>이동 운용 가능.</strong> 타 공연장 이용 시에도 동일한 제어 환경과 저장된 쇼 파일을 그대로 사용할 수 있습니다.</li>
+      <li><strong>장기 확장성 확보.</strong> 도입하는 노드는 국제 표준 규격이므로, 향후 전문 콘솔을 도입하더라도 폐기 없이 승계 사용이 가능합니다.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">8</span>부록 · 실측 조사 체크리스트</h2>
+    <p>제6항 2개월차에 수행할 항목입니다. 조사 결과를 본 기획서 최종본에 반영합니다.</p>
+
+    <h3 data-mark="가.">기구별 점검</h3>
+    <p>기구 21대 전체에 대해 아래 항목을 개별 기록합니다.</p>
+    <ul class="checklist">
+      <li><i class="checkbox"></i>기구 번호 · 제조사 · 모델명</li>
+      <li><i class="checkbox"></i>DMX 시작 주소 및 사용 채널 수 (기구 설정 메뉴에서 확인)</li>
+      <li><i class="checkbox"></i>전 채널 정상 반응 여부 (조광 · 색상 · 무빙의 팬/틸트 각각)</li>
+      <li><i class="checkbox"></i>주소 중복 여부</li>
+    </ul>
+
+    <h3 data-mark="나.">배선 점검</h3>
+    <ul class="checklist">
+      <li><i class="checkbox"></i>DMX 케이블 표기 확인 — <strong>110Ω 또는 DMX 표기</strong> 유무<br><span style="font-size:12.5px;color:var(--ink-2);display:block;margin-top:2px">마이크 케이블(75Ω)이 사용된 경우 신호 불안정의 원인이 되므로 교체 대상</span></li>
+      <li><i class="checkbox"></i>최종단 기구의 <strong>120Ω 종단저항</strong> 설치 여부</li>
+      <li><i class="checkbox"></i>커넥터 규격(3핀/5핀) 및 총 배선 길이</li>
+      <li><i class="checkbox"></i>조명실 ~ 무대 간 네트워크 케이블 포설 가능 여부 및 소요 길이</li>
+    </ul>
+
+    <h3 data-mark="다.">현 콘솔 결함 실측</h3>
+    <p>제1항 결함 1의 객관적 근거 자료로 사용합니다. 페이더를 최하단에 둔 상태에서 각 채널의 실제 DMX 출력값을 기록합니다.</p>
+    <ul class="checklist">
+      <li><i class="checkbox"></i>페이더 최하단 시 채널별 잔류 출력값 — 채널 <span class="blank"></span> : 출력값 <span class="blank"></span></li>
+      <li><i class="checkbox"></i>증상이 확인된 페이더 개수 <span class="blank"></span> / 전체 <span class="blank"></span></li>
+      <li><i class="checkbox"></i>증상 발생 일자 및 공연 중 실제 문제 발생 사례 기록</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p style="max-width:none;margin:0">본 기획서의 금액은 시장 조사에 근거한 추정치이며, 확정 견적으로 대체되어야 합니다. 기구별 DMX 채널 수는 제조사 사양에 따라 달라지므로 부록의 실측 조사를 통해 확정할 필요가 있습니다. 방안 C의 연속 사용 5시간 제한은 제조사 배포 매뉴얼에 기재된 내용입니다.</p>
+  </footer>
+
+</div>
+
+</body></html>
