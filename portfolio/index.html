@@ -97,7 +97,7 @@
   section li{margin-bottom:8px}
   section li::marker{color:var(--ink-2)}
 
-  .evidence{list-style:none;padding:0 !important;margin:32px 0 0 !important;max-width:none !important;
+  .evidence{list-style:none;padding:0;margin:32px 0 0;max-width:none;
     display:grid;grid-template-columns:repeat(3, 1fr);gap:20px}
   .evidence li{margin:0;padding-top:12px;border-top:1.5px solid var(--rule)}
   .evidence .n{display:block;font:600 26px/1.2 "Hahmlet", "Batang", serif;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
@@ -105,7 +105,7 @@
   .evidence .src{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2);margin-top:6px;line-height:1.4}
   @media (max-width:640px){.evidence{grid-template-columns:1fr;gap:16px}}
 
-  .more{margin-top:28px !important;font-weight:700}
+  .more{margin-top:28px;font-weight:700}
 
   footer{margin-top:112px;padding-top:16px;border-top:1px solid var(--hair);font-size:14px;color:var(--ink-2)}
   footer p{margin:0 0 4px}
@@ -144,7 +144,7 @@
     <ul>
       <li>Claude Code와 함께 21가지 결정과 그 이유를 설계서에 남기고, 단계별 계획을 세운 뒤 테스트를 먼저 쓰며 구현했습니다.</li>
       <li>첫 조사 보고서가 웹 검색 없이 모델 지식만으로 쓰인 것을 알아채고, Codex를 업데이트해 실제 웹 검색으로 다시 조사하게 했습니다. 출처가 달린 그 조사로 아침 브리핑 형식을 정했습니다.</li>
-      <li>앱 안의 로컬 AI는 "오후에 약속 생겼어" 같은 말을 해석합니다. 10문항 평가셋으로 모델을 골랐고, 생각 모드를 끄지 않으면 정답이 2/10으로 떨어지고 한 번에 38초가 걸린다는 것도 측정으로 찾았습니다.</li>
+      <li>앱 안의 로컬 AI는 “오후에 약속 생겼어” 같은 말을 해석합니다. 10문항 평가셋으로 모델을 골랐고, 생각 모드를 끄지 않으면 정답이 2/10으로 떨어지고 한 번에 38초가 걸린다는 것도 측정으로 찾았습니다.</li>
       <li>시간 계산은 코드가, 말은 AI가 맡도록 나눴습니다. 로컬 AI가 멈춰도 기본 브리핑은 코드로 나갑니다.</li>
     </ul>
 
@@ -173,7 +173,7 @@
 
     <h3>AI와 어떻게 했나</h3>
     <ul>
-      <li>출력 장치 네 가지를 비용, 이동 편의, 나중에 다시 쓸 수 있는지로 비교했습니다. 가장 싼 USB 장치는 제조사 매뉴얼에 "연속 5시간이 지나면 모든 채널을 0으로 출력"한다는 제한이 있어, 공연 중 전체 소등 위험으로 뺐습니다.</li>
+      <li>출력 장치 네 가지를 비용, 이동 편의, 나중에 다시 쓸 수 있는지로 비교했습니다. 가장 싼 USB 장치는 제조사 매뉴얼에 “연속 5시간이 지나면 모든 채널을 0으로 출력”한다는 제한이 있어, 공연 중 전체 소등 위험으로 뺐습니다.</li>
       <li>확인하지 못한 채널 수와 금액은 추정이라고 표시하고, 돈이 들지 않는 검증과 실측을 구매보다 앞에 두었습니다.</li>
       <li>같은 무대를 두고 uDMX 지연 분석, QLC+ 운용 지도, 이더넷-DMX 노드 제작 계획, 조명 앞에 다는 그림자 판(쿠키) 도면 생성기도 함께 만들었습니다.</li>
     </ul>
@@ -205,7 +205,7 @@
     <ul>
       <li>Claude Code 두 세션(기체, 시뮬레이션)과 Codex가 한 저장소를 함께 고칩니다. 인수인계 문서와 작업 기록 규칙을 세워 세션이 바뀌어도 맥락이 끊기지 않게 했습니다.</li>
       <li>모든 수치를 확인된 사실, 계산 예시, 설계 제안으로 나눠 적게 했습니다. 이 페이지의 근거 표시도 여기서 가져왔습니다.</li>
-      <li>정답 데이터를 보고 문턱값을 고르는 실수를 두 번 잡아낸 뒤, "정답을 보고 방법을 고르지 않는다"를 실험 규칙으로 만들었습니다.</li>
+      <li>정답 데이터를 보고 문턱값을 고르는 실수를 두 번 잡아낸 뒤, “정답을 보고 방법을 고르지 않는다”를 실험 규칙으로 만들었습니다.</li>
       <li>기체를 100대에서 1,000대로 늘려도 커버리지가 0.19에서 0.22로만 오른다는 것을 시뮬레이션으로 확인했습니다. 커버리지는 대수가 아니라 비행 궤적이 정합니다. 궤적을 섞자 같은 비행량에서 0.237이 0.397이 됐습니다.</li>
     </ul>
 
